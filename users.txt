@@ -1,2 +1,1 @@
-1237788,43242,STEAM_0:0:123456
-login2,password2,STEAM_0:1:654321
+hellcodeer,test,STEAM_0:0:123456
