@@ -1,6 +1,3 @@
---// mefedron UI Library
---// Part 1 (Top Navigation Update)
-
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
@@ -15,21 +12,23 @@ local Theme = {
     Background = Color3.fromRGB(22, 22, 22),
     Topbar = Color3.fromRGB(28, 28, 28),
     Accent = Color3.fromRGB(0, 170, 255),
-    TextActive = Color3.fromRGB(255, 255, 255),     -- Белый для активной вкладки
-    TextInactive = Color3.fromRGB(130, 130, 130),   -- Серый для неактивной
+    TextActive = Color3.fromRGB(255, 255, 255),
+    TextInactive = Color3.fromRGB(130, 130, 130),
     Button = Color3.fromRGB(35, 35, 35),
     Hover = Color3.fromRGB(48, 48, 48),
     Stroke = Color3.fromRGB(50, 50, 50),
+    OffStatus = Color3.fromRGB(255, 60, 60),
+    OnStatus = Color3.fromRGB(0, 255, 120),
 }
 
 function Library:CreateWindow(Name)
 
-    if PlayerGui:FindFirstChild("mefedron") then
-        PlayerGui.mefedron:Destroy()
+    if PlayerGui:FindFirstChild("mef") then
+        PlayerGui.mef:Destroy()
     end
 
     local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "mefedron"
+    ScreenGui.Name = "mef"
     ScreenGui.ResetOnSpawn = false
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.Parent = PlayerGui
@@ -42,7 +41,6 @@ function Library:CreateWindow(Name)
     Main.BorderSizePixel = 0
     Main.ClipsDescendants = true
 
-    -- Анимация открытия
     Main.Size = UDim2.new(0, 0, 0, 0)
     TweenService:Create(
         Main,
@@ -57,7 +55,6 @@ function Library:CreateWindow(Name)
     Stroke.Color = Theme.Stroke
     Stroke.Thickness = 1
 
-    -- Шапка (Topbar)
     local Topbar = Instance.new("Frame")
     Topbar.Parent = Main
     Topbar.Size = UDim2.new(1, 0, 0, 38)
@@ -70,12 +67,11 @@ function Library:CreateWindow(Name)
     Title.Position = UDim2.new(0, 14, 0, 0)
     Title.Size = UDim2.new(0, 140, 1, 0)
     Title.Font = Enum.Font.GothamBold
-    Title.Text = Name or "mefedron"
+    Title.Text = Name or "mef"
     Title.TextColor3 = Theme.TextActive
     Title.TextSize = 16
     Title.TextXAlignment = Enum.TextXAlignment.Left
 
-    -- Контейнер для вкладок сверху
     local TabsHolder = Instance.new("ScrollingFrame")
     TabsHolder.Parent = Topbar
     TabsHolder.Position = UDim2.new(0, 150, 0, 0)
@@ -94,7 +90,6 @@ function Library:CreateWindow(Name)
         TabsHolder.CanvasSize = UDim2.new(0, TabsLayout.AbsoluteContentSize.X + 10, 0, 0)
     end)
 
-    -- Контейнер контента
     local Container = Instance.new("Frame")
     Container.Parent = Main
     Container.Position = UDim2.new(0, 12, 0, 50)
@@ -106,7 +101,6 @@ function Library:CreateWindow(Name)
 
     function Library:CreateTab(Text)
 
-        -- Текстовая кнопка вкладки сверху
         local Button = Instance.new("TextButton")
         Button.Parent = TabsHolder
         Button.Size = UDim2.new(0, 0, 1, 0)
@@ -118,7 +112,6 @@ function Library:CreateWindow(Name)
         Button.BackgroundTransparency = 1
         Button.BorderSizePixel = 0
 
-        -- Линия-акцент под выбранной вкладкой
         local AccentLine = Instance.new("Frame")
         AccentLine.Parent = Button
         AccentLine.AnchorPoint = Vector2.new(0.5, 1)
@@ -126,7 +119,7 @@ function Library:CreateWindow(Name)
         AccentLine.Size = UDim2.new(1, 0, 0, 2)
         AccentLine.BackgroundColor3 = Theme.TextActive
         AccentLine.BorderSizePixel = 0
-        AccentLine.BackgroundTransparency = 1 -- Скрыта по умолчанию
+        AccentLine.BackgroundTransparency = 1
 
         local Page = Instance.new("ScrollingFrame")
         Page.Parent = Container
@@ -152,12 +145,10 @@ function Library:CreateWindow(Name)
             for _, item in ipairs(TabButtons) do
                 item.Page.Visible = false
                 
-                -- Возвращаем серый цвет неактивным вкладкам
                 TweenService:Create(item.Button, TweenInfo.new(0.2), {TextColor3 = Theme.TextInactive}):Play()
                 TweenService:Create(item.Line, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
             end
 
-            -- Подсвечиваем активную вкладку белым
             Page.Visible = true
             TweenService:Create(Button, TweenInfo.new(0.2), {TextColor3 = Theme.TextActive}):Play()
             TweenService:Create(AccentLine, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
@@ -165,7 +156,6 @@ function Library:CreateWindow(Name)
 
         Button.MouseButton1Click:Connect(ActivateTab)
 
-        -- Выбираем первую вкладку по умолчанию
         if #Pages == 1 then
             ActivateTab()
         end
@@ -264,10 +254,86 @@ function Library:CreateWindow(Name)
             return Button
         end
 
+        function Tab:AddToggle(Text, Default, Callback)
+            local Toggled = Default or false
+
+            local Button = Instance.new("TextButton")
+            Button.Parent = Page
+            Button.Size = UDim2.new(1, -8, 0, 36)
+            Button.BackgroundColor3 = Theme.Button
+            Button.BorderSizePixel = 0
+            Button.AutoButtonColor = false
+            Button.Text = ""
+
+            local Corner = Instance.new("UICorner")
+            Corner.CornerRadius = UDim.new(0, 6)
+            Corner.Parent = Button
+
+            local Stroke = Instance.new("UIStroke")
+            Stroke.Parent = Button
+            Stroke.Color = Toggled and Theme.OnStatus or Theme.Stroke
+            Stroke.Thickness = 1
+
+            local Title = Instance.new("TextLabel")
+            Title.Parent = Button
+            Title.BackgroundTransparency = 1
+            Title.Position = UDim2.new(0, 12, 0, 0)
+            Title.Size = UDim2.new(1, -80, 1, 0)
+            Title.Font = Enum.Font.GothamMedium
+            Title.Text = Text or "Toggle"
+            Title.TextColor3 = Theme.TextActive
+            Title.TextSize = 14
+            Title.TextXAlignment = Enum.TextXAlignment.Left
+
+            local Status = Instance.new("TextLabel")
+            Status.Parent = Button
+            Status.AnchorPoint = Vector2.new(1, 0.5)
+            Status.Position = UDim2.new(1, -12, 0.5, 0)
+            Status.Size = UDim2.new(0, 60, 1, 0)
+            Status.Font = Enum.Font.GothamBold
+            Status.Text = Toggled and "ON" or "OFF"
+            Status.TextColor3 = Toggled and Theme.OnStatus or Theme.OffStatus
+            Status.TextSize = 13
+            Status.TextXAlignment = Enum.TextXAlignment.Right
+            Status.BackgroundTransparency = 1
+
+            local function UpdateState()
+                local TargetColor = Toggled and Theme.OnStatus or Theme.OffStatus
+                
+                TweenService:Create(Status, TweenInfo.new(0.15), {TextColor3 = TargetColor}):Play()
+                TweenService:Create(Stroke, TweenInfo.new(0.15), {Color = Toggled and Theme.OnStatus or Theme.Stroke}):Play()
+                
+                Status.Text = Toggled and "ON" or "OFF"
+
+                if Callback then
+                    task.spawn(Callback, Toggled)
+                end
+            end
+
+            Button.MouseEnter:Connect(function()
+                TweenService:Create(Button, TweenInfo.new(0.15), {BackgroundColor3 = Theme.Hover}):Play()
+            end)
+
+            Button.MouseLeave:Connect(function()
+                TweenService:Create(Button, TweenInfo.new(0.15), {BackgroundColor3 = Theme.Button}):Play()
+            end)
+
+            Button.MouseButton1Down:Connect(function()
+                TweenService:Create(Button, TweenInfo.new(0.06), {Size = UDim2.new(1, -12, 0, 34)}):Play()
+            end)
+
+            Button.MouseButton1Up:Connect(function()
+                TweenService:Create(Button, TweenInfo.new(0.06), {Size = UDim2.new(1, -8, 0, 36)}):Play()
+                Toggled = not Toggled
+                UpdateState()
+            end)
+
+            return Button
+        end
+
         return Tab
     end
 
-    -- Перетаскивание окна
     local Dragging, DragStart, StartPos
 
     Topbar.InputBegan:Connect(function(Input)
