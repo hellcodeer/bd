@@ -17,8 +17,9 @@ local Theme = {
     Button = Color3.fromRGB(35, 35, 35),
     Hover = Color3.fromRGB(48, 48, 48),
     Stroke = Color3.fromRGB(50, 50, 50),
-    OffStatus = Color3.fromRGB(255, 60, 60),
-    OnStatus = Color3.fromRGB(0, 255, 120),
+    ToggleOff = Color3.fromRGB(45, 45, 45),
+    ToggleOn = Color3.fromRGB(50, 205, 180),
+    ToggleCircle = Color3.fromRGB(255, 255, 255)
 }
 
 function Library:CreateWindow(Name)
@@ -257,78 +258,103 @@ function Library:CreateWindow(Name)
         function Tab:AddToggle(Text, Default, Callback)
             local Toggled = Default or false
 
-            local Button = Instance.new("TextButton")
-            Button.Parent = Page
-            Button.Size = UDim2.new(1, -8, 0, 36)
-            Button.BackgroundColor3 = Theme.Button
-            Button.BorderSizePixel = 0
-            Button.AutoButtonColor = false
-            Button.Text = ""
+            local ToggleFrame = Instance.new("Frame")
+            ToggleFrame.Parent = Page
+            ToggleFrame.Size = UDim2.new(1, -8, 0, 36)
+            ToggleFrame.BackgroundColor3 = Theme.Button
+            ToggleFrame.BorderSizePixel = 0
 
             local Corner = Instance.new("UICorner")
             Corner.CornerRadius = UDim.new(0, 6)
-            Corner.Parent = Button
+            Corner.Parent = ToggleFrame
 
             local Stroke = Instance.new("UIStroke")
-            Stroke.Parent = Button
-            Stroke.Color = Toggled and Theme.OnStatus or Theme.Stroke
+            Stroke.Parent = ToggleFrame
+            Stroke.Color = Theme.Stroke
             Stroke.Thickness = 1
 
-            local Title = Instance.new("TextLabel")
-            Title.Parent = Button
-            Title.BackgroundTransparency = 1
-            Title.Position = UDim2.new(0, 12, 0, 0)
-            Title.Size = UDim2.new(1, -80, 1, 0)
-            Title.Font = Enum.Font.GothamMedium
-            Title.Text = Text or "Toggle"
-            Title.TextColor3 = Theme.TextActive
-            Title.TextSize = 14
-            Title.TextXAlignment = Enum.TextXAlignment.Left
+            local Label = Instance.new("TextLabel")
+            Label.Parent = ToggleFrame
+            Label.BackgroundTransparency = 1
+            Label.Position = UDim2.new(0, 12, 0, 0)
+            Label.Size = UDim2.new(1, -70, 1, 0)
+            Label.Font = Enum.Font.GothamMedium
+            Label.Text = Text or "Toggle"
+            Label.TextColor3 = Theme.TextActive
+            Label.TextSize = 14
+            Label.TextXAlignment = Enum.TextXAlignment.Left
 
-            local Status = Instance.new("TextLabel")
-            Status.Parent = Button
-            Status.AnchorPoint = Vector2.new(1, 0.5)
-            Status.Position = UDim2.new(1, -12, 0.5, 0)
-            Status.Size = UDim2.new(0, 60, 1, 0)
-            Status.Font = Enum.Font.GothamBold
-            Status.Text = Toggled and "ON" or "OFF"
-            Status.TextColor3 = Toggled and Theme.OnStatus or Theme.OffStatus
-            Status.TextSize = 13
-            Status.TextXAlignment = Enum.TextXAlignment.Right
-            Status.BackgroundTransparency = 1
+            local SwitchTrack = Instance.new("Frame")
+            SwitchTrack.Parent = ToggleFrame
+            SwitchTrack.AnchorPoint = Vector2.new(1, 0.5)
+            SwitchTrack.Position = UDim2.new(1, -10, 0.5, 0)
+            SwitchTrack.Size = UDim2.new(0, 44, 0, 22)
+            SwitchTrack.BackgroundColor3 = Toggled and Theme.ToggleOn or Theme.ToggleOff
+            SwitchTrack.BorderSizePixel = 0
+
+            local TrackCorner = Instance.new("UICorner")
+            TrackCorner.CornerRadius = UDim.new(1, 0)
+            TrackCorner.Parent = SwitchTrack
+
+            local Gradient = Instance.new("UIGradient")
+            Gradient.Parent = SwitchTrack
+            Gradient.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 225, 160)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(60, 160, 240))
+            })
+            Gradient.Enabled = Toggled
+
+            local SwitchCircle = Instance.new("Frame")
+            SwitchCircle.Parent = SwitchTrack
+            SwitchCircle.AnchorPoint = Vector2.new(0, 0.5)
+            SwitchCircle.Position = Toggled and UDim2.new(1, -20, 0.5, 0) or UDim2.new(0, 2, 0.5, 0)
+            SwitchCircle.Size = UDim2.new(0, 18, 0, 18)
+            SwitchCircle.BackgroundColor3 = Theme.ToggleCircle
+            SwitchCircle.BorderSizePixel = 0
+
+            local CircleCorner = Instance.new("UICorner")
+            CircleCorner.CornerRadius = UDim.new(1, 0)
+            CircleCorner.Parent = SwitchCircle
+
+            local ClickButton = Instance.new("TextButton")
+            ClickButton.Parent = ToggleFrame
+            ClickButton.Size = UDim2.new(1, 0, 1, 0)
+            ClickButton.BackgroundTransparency = 1
+            ClickButton.Text = ""
 
             local function UpdateState()
-                local TargetColor = Toggled and Theme.OnStatus or Theme.OffStatus
-                
-                TweenService:Create(Status, TweenInfo.new(0.15), {TextColor3 = TargetColor}):Play()
-                TweenService:Create(Stroke, TweenInfo.new(0.15), {Color = Toggled and Theme.OnStatus or Theme.Stroke}):Play()
-                
-                Status.Text = Toggled and "ON" or "OFF"
+                local TargetColor = Toggled and Theme.ToggleOn or Theme.ToggleOff
+                local TargetPos = Toggled and UDim2.new(1, -20, 0.5, 0) or UDim2.new(0, 2, 0.5, 0)
+
+                Gradient.Enabled = Toggled
+
+                TweenService:Create(SwitchTrack, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                    BackgroundColor3 = TargetColor
+                }):Play()
+
+                TweenService:Create(SwitchCircle, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                    Position = TargetPos
+                }):Play()
 
                 if Callback then
                     task.spawn(Callback, Toggled)
                 end
             end
 
-            Button.MouseEnter:Connect(function()
-                TweenService:Create(Button, TweenInfo.new(0.15), {BackgroundColor3 = Theme.Hover}):Play()
+            ClickButton.MouseEnter:Connect(function()
+                TweenService:Create(ToggleFrame, TweenInfo.new(0.15), {BackgroundColor3 = Theme.Hover}):Play()
             end)
 
-            Button.MouseLeave:Connect(function()
-                TweenService:Create(Button, TweenInfo.new(0.15), {BackgroundColor3 = Theme.Button}):Play()
+            ClickButton.MouseLeave:Connect(function()
+                TweenService:Create(ToggleFrame, TweenInfo.new(0.15), {BackgroundColor3 = Theme.Button}):Play()
             end)
 
-            Button.MouseButton1Down:Connect(function()
-                TweenService:Create(Button, TweenInfo.new(0.06), {Size = UDim2.new(1, -12, 0, 34)}):Play()
-            end)
-
-            Button.MouseButton1Up:Connect(function()
-                TweenService:Create(Button, TweenInfo.new(0.06), {Size = UDim2.new(1, -8, 0, 36)}):Play()
+            ClickButton.MouseButton1Click:Connect(function()
                 Toggled = not Toggled
                 UpdateState()
             end)
 
-            return Button
+            return ToggleFrame
         end
 
         return Tab
