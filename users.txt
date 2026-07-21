@@ -19,7 +19,9 @@ local Theme = {
     Stroke = Color3.fromRGB(50, 50, 50),
     ToggleOff = Color3.fromRGB(45, 45, 45),
     ToggleOn = Color3.fromRGB(0, 200, 150),
-    ToggleCircle = Color3.fromRGB(255, 255, 255)
+    ToggleCircle = Color3.fromRGB(255, 255, 255),
+    SliderTrack = Color3.fromRGB(45, 45, 45),
+    SliderFill = Color3.fromRGB(0, 170, 255)
 }
 
 function Library:CreateWindow(Name)
@@ -145,7 +147,7 @@ function Library:CreateWindow(Name)
         local function ActivateTab()
             for _, item in ipairs(TabButtons) do
                 item.Page.Visible = false
-                
+
                 TweenService:Create(item.Button, TweenInfo.new(0.2), {TextColor3 = Theme.TextInactive}):Play()
                 TweenService:Create(item.Line, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
             end
@@ -345,6 +347,119 @@ function Library:CreateWindow(Name)
             end)
 
             return ToggleFrame
+        end
+
+        function Tab:AddSlider(Text, Min, Max, Default, Callback)
+            Min = Min or 0
+            Max = Max or 100
+            Default = math.clamp(Default or Min, Min, Max)
+
+            local SliderFrame = Instance.new("Frame")
+            SliderFrame.Parent = Page
+            SliderFrame.Size = UDim2.new(1, -8, 0, 48)
+            SliderFrame.BackgroundColor3 = Theme.Button
+            SliderFrame.BorderSizePixel = 0
+
+            local Corner = Instance.new("UICorner")
+            Corner.CornerRadius = UDim.new(0, 6)
+            Corner.Parent = SliderFrame
+
+            local Stroke = Instance.new("UIStroke")
+            Stroke.Parent = SliderFrame
+            Stroke.Color = Theme.Stroke
+            Stroke.Thickness = 1
+
+            local TitleLabel = Instance.new("TextLabel")
+            TitleLabel.Parent = SliderFrame
+            TitleLabel.BackgroundTransparency = 1
+            TitleLabel.Position = UDim2.new(0, 12, 0, 6)
+            TitleLabel.Size = UDim2.new(1, -80, 0, 18)
+            TitleLabel.Font = Enum.Font.GothamMedium
+            TitleLabel.Text = Text or "Slider"
+            TitleLabel.TextColor3 = Theme.TextActive
+            TitleLabel.TextSize = 14
+            TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+            local ValueLabel = Instance.new("TextLabel")
+            ValueLabel.Parent = SliderFrame
+            ValueLabel.BackgroundTransparency = 1
+            ValueLabel.Position = UDim2.new(1, -62, 0, 6)
+            ValueLabel.Size = UDim2.new(0, 50, 0, 18)
+            ValueLabel.Font = Enum.Font.GothamMedium
+            ValueLabel.Text = tostring(Default)
+            ValueLabel.TextColor3 = Theme.TextInactive
+            ValueLabel.TextSize = 14
+            ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
+
+            local Track = Instance.new("Frame")
+            Track.Parent = SliderFrame
+            Track.Position = UDim2.new(0, 12, 0, 30)
+            Track.Size = UDim2.new(1, -24, 0, 6)
+            Track.BackgroundColor3 = Theme.SliderTrack
+            Track.BorderSizePixel = 0
+
+            local TrackCorner = Instance.new("UICorner")
+            TrackCorner.CornerRadius = UDim.new(1, 0)
+            TrackCorner.Parent = Track
+
+            local Fill = Instance.new("Frame")
+            Fill.Parent = Track
+            Fill.Size = UDim2.new((Default - Min) / (Max - Min), 0, 1, 0)
+            Fill.BackgroundColor3 = Theme.SliderFill
+            Fill.BorderSizePixel = 0
+
+            local FillCorner = Instance.new("UICorner")
+            FillCorner.CornerRadius = UDim.new(1, 0)
+            FillCorner.Parent = Fill
+
+            local Trigger = Instance.new("TextButton")
+            Trigger.Parent = SliderFrame
+            Trigger.Size = UDim2.new(1, 0, 1, 0)
+            Trigger.BackgroundTransparency = 1
+            Trigger.Text = ""
+
+            local Sliding = false
+
+            local function UpdateSlider(Input)
+                local Alpha = math.clamp((Input.Position.X - Track.AbsolutePosition.X) / Track.AbsoluteSize.X, 0, 1)
+                local Value = math.floor(Min + (Max - Min) * Alpha)
+
+                Fill.Size = UDim2.new(Alpha, 0, 1, 0)
+                ValueLabel.Text = tostring(Value)
+
+                if Callback then
+                    task.spawn(Callback, Value)
+                end
+            end
+
+            Trigger.InputBegan:Connect(function(Input)
+                if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+                    Sliding = true
+                    UpdateSlider(Input)
+                end
+            end)
+
+            Trigger.InputEnded:Connect(function(Input)
+                if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+                    Sliding = false
+                end
+            end)
+
+            UserInputService.InputChanged:Connect(function(Input)
+                if Sliding and (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch) then
+                    UpdateSlider(Input)
+                end
+            end)
+
+            Trigger.MouseEnter:Connect(function()
+                TweenService:Create(SliderFrame, TweenInfo.new(0.15), {BackgroundColor3 = Theme.Hover}):Play()
+            end)
+
+            Trigger.MouseLeave:Connect(function()
+                TweenService:Create(SliderFrame, TweenInfo.new(0.15), {BackgroundColor3 = Theme.Button}):Play()
+            end)
+
+            return SliderFrame
         end
 
         return Tab
